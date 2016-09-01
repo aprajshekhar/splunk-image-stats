@@ -3,7 +3,7 @@
 """A simple example showing to use the Service.job method to retrieve
 a search Job by its sid.
 """
-
+import json
 import sys
 import os
 import datetime
@@ -21,7 +21,7 @@ from utils import *
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-ImagePullStats = namedtuple('ImagePullStat', ['image_name', 'pulls', 'time'])
+ImagePullStats = namedtuple('ImagePullStat', ['pulls'])
 
 CONFIG_FILE_PATH = '/etc/config.yaml'
 CONFIG_ENV_NAME = 'CONFIG_FILE_PATH'
@@ -47,9 +47,10 @@ def execute_splunk_search(**kwargs):
     #         print result
 
     print 'getting pull stat of %s' % kwargs['image_name']
-    job = service.jobs.create('search index=* host=crane0*.web.prod* \"/v1/repositories/'+kwargs['image_name'] +
-                              '/images\" status = 200 |stats count',
-                              exec_mode='blocking', earliest_time='-1h', latest=datetime.time.hour)
+    job = service.jobs.create('search index=* host=crane0*.web.prod* \"/v2/'+kwargs['image_name'] +
+                              '/manifests\" status = 302 |stats count',
+                              exec_mode='blocking', earliest_time=kwargs['from_time'],
+                              latest=kwargs['end_time'])
     blocking_results = job.results(count=0)
     content = blocking_results.read()
     # print content
@@ -69,11 +70,18 @@ def run(argv):
     args = {}
     if configuration is None:
         opts = parse(argv, {}, ".splunkrc")
+        opts.kwargs['search_host'] = "<uri>"
+        opts.kwargs['from_time'] = '-1h'
+        opts.kwargs['end_time'] = datetime.time.hour
     else:
         args = {
             'host': configuration['host'],
             'username': configuration['username'],
-            'password': configuration['password']
+            'password': configuration['password'],
+            'search_host': configuration['search_host'],
+            'search_type': configuration['search_type'],
+            'from_time': configuration['start_time'] or '-1h',
+            'end_time': configuration['end_time'] or datetime.time.hour
             }
 
     if opts is not None:
@@ -83,21 +91,22 @@ def run(argv):
 
 def get_stats(**kwargs):
     stats = {}
-    images = SearchImages('<host>/rs/search')
-    images.rows = 1000
+    images = SearchImages(kwargs['search_host']+'/rs/search')
+    images.rows = 200
     image_list = list(images.search('documentKind:ImageRepository'))
     for image in image_list:
         kwargs['image_name'] = image
         count = execute_splunk_search(**kwargs)
         print 'pull stat of %(image)s is %(pull)s' % {'image': image,
                                                       'pull': count}
-        stat_tuple = ImagePullStats(image, count, datetime.datetime.now().strftime('%H'))
-        stats[image] = stat_tuple
+        stat_tuple = ImagePullStats(count, )  # datetime.datetime.now().strftime('%H'))
+        stats[image] = stat_tuple.__dict__
         sleep(2)
     return sorteddict.SortedDict(stats)
 
 if __name__ == "__main__":
     # main(sys.argv[1:])
     stats = run(sys.argv[1:])
-    print 'stats %s' % stats
+    stat_json = json.dumps(stats, indent=4)
+    print stat_json
 

@@ -23,7 +23,7 @@ def run():
         print 'Could not load configuration.'
         sys.exit(-1)
     args = {
-        'host': configuration['host'] or 'splunk.corp.redhat.com',
+        'host': configuration['host'],
         'username': configuration['username'],
         'password': configuration['password'],
         'search_host': configuration['search_host'],

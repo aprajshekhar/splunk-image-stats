@@ -7,16 +7,25 @@ import sys
 import yaml
 
 from oneshot import get_stats
+from save import save_data
 
-
-CONFIG_FILE_PATH = '/etc/config.yaml'
+CONFIG_FILE_PATH = '/etc/image-pull-stats/config.yaml'
 CONFIG_ENV_NAME = 'CONFIG_FILE_PATH'
+
+
+def save(configuration, pull_data):
+    response = save_data(url=configuration['save_url'], data_json=json.dumps(pull_data, indent=4),
+                         cert_path=configuration['cert_path'], cert_passphrase=configuration['passphrase'],
+                         save_entity=configuration['save_entity_name'],
+                         version=configuration['save_entity_version']
+                         )
+    return json.loads(response)
 
 
 def run():
     config_path = os.environ.get(CONFIG_ENV_NAME) or CONFIG_FILE_PATH
     print os.environ
-    configuration = None
+    configuration = {}
     try:
         configuration = yaml.safe_load(open(config_path))
     except Exception:
@@ -26,16 +35,23 @@ def run():
         'host': configuration['host'],
         'username': configuration['username'],
         'password': configuration['password'],
+        'crane_host': configuration['crane_host'],
         'search_host': configuration['search_host'],
         'search_type': configuration['search_type'] or 'documentKind:ImageRepository',
-        'from_time': configuration['start_time'] or '-1h',
-        'end_time': configuration['end_time'] or datetime.time.hour
+        'from_time': configuration['start_time'] or '-2h',
+        'end_time': configuration['end_time'] or datetime.time.hour,
+        'save_entity': configuration['save_entity_name'],
+        'save_entity_version': configuration['save_entity_version']
         }
 
-    return get_stats(**args)
+    stats = get_stats(**args)
+    resp_data = save(configuration, stats)
+    if not resp_data['status'] == "COMPLETE":
+        print "Error occurred while populating lightblue entity: %s" % resp_data
+        sys.exit(-1)
+    return resp_data
 
 if __name__ == "__main__":
-    # main(sys.argv[1:])
-    stats = run()
-    stat_json = json.dumps(stats, indent=4)
-    print stat_json
+    response_data = run()
+    print "Pull statistics has been  successfully pushed to lightblue:"
+    print response_data

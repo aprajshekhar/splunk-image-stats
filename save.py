@@ -13,7 +13,7 @@ def save_data(data_json, cert_path, cert_passphrase, url, save_entity, version):
     curl.setopt(pycurl.CUSTOMREQUEST, "PUT")
     curl.setopt(pycurl.POSTFIELDS, data_json)
     curl.setopt(pycurl.SSLKEYTYPE, "PEM")
-    curl.setopt(pycurl.SSLKEY, cert_path)
+    curl.setopt(pycurl.SSLCERT, cert_path)
     curl.setopt(pycurl.SSLKEYPASSWD, cert_passphrase)
     buff = StringIO()
     curl.setopt(pycurl.WRITEFUNCTION, buff.write)

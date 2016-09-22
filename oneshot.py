@@ -52,7 +52,7 @@ def __get_image_list__(**kwargs):
         return list(crane.get())
 
     images = SearchImages(kwargs['search_host'] + '/rs/search')
-    images.rows = 2
+    images.rows = 100
     return list(images.search('documentKind:ImageRepository'))
 
 

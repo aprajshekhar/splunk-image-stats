@@ -38,8 +38,8 @@ def run():
         'crane_host': configuration['crane_host'],
         'search_host': configuration['search_host'],
         'search_type': configuration['search_type'] or 'documentKind:ImageRepository',
-        'from_time': configuration['start_time'] or '-2h',
-        'end_time': configuration['end_time'] or datetime.time.hour,
+        'time_delta': configuration['time_delta'] or '-2',
+        'delta_type': configuration['delta_type'] or 'h',
         'save_entity': configuration['save_entity_name'],
         'save_entity_version': configuration['save_entity_version']
         }

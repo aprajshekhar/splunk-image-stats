@@ -20,17 +20,18 @@ import pytz
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-ImagePullStats = namedtuple('ImagePullStat', ['repository', 'end_date', 'registry', 'value', 'metric_type'])
+ImagePullStats = namedtuple('ImagePullStat', ['repository', 'end_date', 'registry', 'value', 'metric_type',
+                                              'start_date'])
 
 
 def execute_splunk_search(**kwargs):
     service = client.connect(**kwargs)
-
+    earliest = '-'+str(kwargs['time_delta'])+kwargs['delta_type']
     print 'getting pull stat of %s' % kwargs['image_name']
     job = service.jobs.create('search index=* host=crane0*.web.prod* \"/v2/'+kwargs['image_name'] +
                               '/manifests\" status = 302 |stats count',
-                              exec_mode='blocking', earliest_time=kwargs['from_time'],
-                              latest=kwargs['end_time'])
+                              exec_mode='blocking', earliest_time=earliest,
+                              latest=datetime.time.hour)
     blocking_results = job.results(count=0)
     content = blocking_results.read()
 
@@ -52,8 +53,21 @@ def __get_image_list__(**kwargs):
         return list(crane.get())
 
     images = SearchImages(kwargs['search_host'] + '/rs/search')
-    images.rows = 100
+    images.rows = 1000
     return list(images.search('documentKind:ImageRepository'))
+
+
+def __calculate_start_datetime(delta_type, delta):
+    if delta_type == 'd':
+        return datetime.datetime.utcnow() - datetime.timedelta(days=delta)
+    else:
+        return datetime.datetime.utcnow() - datetime.timedelta(hours=delta)
+
+
+def __get_start_date__(delta_type, delta):
+    start_date = __calculate_start_datetime(delta_type, delta)
+    start_date_str = start_date.strftime('%Y%m%dT%H:%M:%S.%f')[:-3]
+    return start_date_str + datetime.datetime.now(pytz.timezone("GMT")).strftime('%z')
 
 
 def get_stats(**kwargs):
@@ -69,13 +83,14 @@ def get_stats(**kwargs):
 
     end_date_tz = __get_end_date__()
 
+    start_date_tz = __get_start_date__(kwargs['delta_type'], kwargs['time_delta'])
     for image in image_list:
         kwargs['image_name'] = image
         count = execute_splunk_search(**kwargs)
         print 'pull stat of %(image)s is %(pull)s' % {'image': image,
                                                       'pull': count}
         stat_tuple = ImagePullStats(repository=image, end_date=end_date_tz, registry='registry.access.redhat.com',
-                                    value=count, metric_type='pull')
+                                    value=count, metric_type='pull', start_date=start_date_tz)
         data.append(stat_tuple.__dict__)
         sleep(2)
         stats['data'] = data

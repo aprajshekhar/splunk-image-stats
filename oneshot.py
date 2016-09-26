@@ -40,14 +40,14 @@ def execute_splunk_search(**kwargs):
     return xmldict['result']['field']['value']['text']
 
 
-def __get_end_date__():
+def __get_end_date():
     now = datetime.datetime.utcnow()
     end_date = now.strftime('%Y%m%dT%H:%M:%S.%f')[:-3]
     end_date_tz = end_date + datetime.datetime.now(pytz.timezone("GMT")).strftime('%z')
     return end_date_tz
 
 
-def __get_image_list__(**kwargs):
+def __get_image_list(**kwargs):
     if kwargs['crane_host'] is not None:
         crane = CraneRepositories(kwargs['crane_host']+'/crane/repositories/v2')
         return list(crane.get())
@@ -64,7 +64,7 @@ def __calculate_start_datetime(delta_type, delta):
         return datetime.datetime.utcnow() - datetime.timedelta(hours=delta)
 
 
-def __get_start_date__(delta_type, delta):
+def __get_start_date(delta_type, delta):
     start_date = __calculate_start_datetime(delta_type, delta)
     start_date_str = start_date.strftime('%Y%m%dT%H:%M:%S.%f')[:-3]
     return start_date_str + datetime.datetime.now(pytz.timezone("GMT")).strftime('%z')
@@ -78,12 +78,12 @@ def get_stats(**kwargs):
               pull statistics
     """
     stats = {}
-    image_list = __get_image_list__(**kwargs)
+    image_list = __get_image_list(**kwargs)
     data = []
 
-    end_date_tz = __get_end_date__()
+    end_date_tz = __get_end_date()
 
-    start_date_tz = __get_start_date__(kwargs['delta_type'], kwargs['time_delta'])
+    start_date_tz = __get_start_date(kwargs['delta_type'], kwargs['time_delta'])
     for image in image_list:
         kwargs['image_name'] = image
         count = execute_splunk_search(**kwargs)

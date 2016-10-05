@@ -86,15 +86,13 @@ def get_stats(**kwargs):
     start_date_tz = __get_start_date(kwargs['delta_type'], kwargs['time_delta'])
     for image in image_list:
         kwargs['image_name'] = image
-        if image == 'test/testrepo':
-            continue
         count = execute_splunk_search(**kwargs)
         print 'pull stat of %(image)s is %(pull)s' % {'image': image,
                                                       'pull': count}
         stat_tuple = ImagePullStats(repository=image, end_date=end_date_tz, registry='registry.access.redhat.com',
                                     value=count, metric_type='pull', start_date=start_date_tz)
         data.append(stat_tuple.__dict__)
-        sleep(2)
+        sleep(5)
         stats['data'] = data
     stats['objectType'] = kwargs['save_entity']
     stats['version'] = kwargs['save_entity_version']

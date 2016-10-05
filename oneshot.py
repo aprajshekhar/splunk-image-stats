@@ -86,6 +86,8 @@ def get_stats(**kwargs):
     start_date_tz = __get_start_date(kwargs['delta_type'], kwargs['time_delta'])
     for image in image_list:
         kwargs['image_name'] = image
+        if image == 'test/testrep':
+            continue
         count = execute_splunk_search(**kwargs)
         print 'pull stat of %(image)s is %(pull)s' % {'image': image,
                                                       'pull': count}

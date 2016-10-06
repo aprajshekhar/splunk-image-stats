@@ -6,7 +6,7 @@ import datetime
 import sys
 import yaml
 
-from oneshot import get_stats
+from oneshot import SplunkSearch
 from save import save_data
 
 CONFIG_FILE_PATH = '/etc/image-pull-stats/config.yaml'
@@ -44,7 +44,8 @@ def run():
         'save_entity_version': configuration['save_entity_version']
         }
 
-    stats = get_stats(**args)
+    splunk_search = SplunkSearch(**args)
+    stats = splunk_search.get_stats(**args)
     resp_data = save(configuration, stats)
     if not resp_data['status'] == "COMPLETE":
         print "Error occurred while populating lightblue entity: %s" % resp_data

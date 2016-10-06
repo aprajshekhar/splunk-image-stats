@@ -89,9 +89,11 @@ class SplunkSearch(object):
             count = self.execute_splunk_search(**kwargs)
             print 'pull stat of %(image)s is %(pull)s' % {'image': image,
                                                           'pull': count}
-            stat_tuple = self.ImagePullStats(repository=image, end_date=end_date_tz, registry='registry.access.redhat.com',
-                                        value=count, metric_type='pull', start_date=start_date_tz)
-            data.append(stat_tuple.__dict__)
+            #stat_tuple = self.ImagePullStats(repository=image, end_date=end_date_tz, registry='registry.access.redhat.com',
+                                        #value=count, metric_type='pull', start_date=start_date_tz)
+            stat_dict = {'repository': image, 'end_date': end_date_tz, 'registry': 'registry.access.redhat.com',
+                         'value': count, 'metric_type': 'pull', 'start_date': start_date_tz}
+            data.append(stat_dict)
             sleep(2)
             stats['data'] = data
         stats['objectType'] = kwargs['save_entity']

@@ -1,13 +1,13 @@
-host: splunk.corp.redhat.com
-username: randalap
-password: Spring@03
-search_host: https://api.access.redhat.com
+host: 
+username: 
+password: 
+search_host: 
 search_type:
 time_delta: 2
 delta_type: h
-save_url: https://lightbluedatasvc.dev.a1.vary.redhat.com/
-cert_path: /home/randalap/NetBeansProjects/lightblue-certs/lb-randalap.pem
-passphrase: o423k3kv
-save_entity_name: containerMetric
-save_entity_version: 0.0.5-SNAPSHOT
+save_url: 
+cert_path: 
+passphrase: 
+save_entity_name: 
+save_entity_version: 
 crane_host:

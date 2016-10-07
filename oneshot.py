@@ -59,7 +59,7 @@ class SplunkSearch(object):
             return list(crane.get())
 
         images = SearchImages(kwargs['search_host'] + '/rs/search')
-        images.rows = 2
+        images.rows = 1000
         return list(images.search('documentKind:ImageRepository'))
 
 
@@ -84,7 +84,13 @@ class SplunkSearch(object):
                   pull statistics
         """
         stats = {}
-        image_list = self.__get_image_list(**kwargs)
+        try:
+            image_list = self.__get_image_list(**kwargs)
+        except Exception:
+            print 'Retrying search'
+            sleep(10)
+            image_list = self.__get_image_list(**kwargs)
+
         data = []
 
         end_date_tz = self.__get_end_date()

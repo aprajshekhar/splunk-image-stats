@@ -41,7 +41,8 @@ def run():
         'time_delta': configuration['time_delta'] or '2',
         'delta_type': configuration['delta_type'] or 'h',
         'save_entity': configuration['save_entity_name'],
-        'save_entity_version': configuration['save_entity_version']
+        'save_entity_version': configuration['save_entity_version'],
+        'env': configuration['env']
         }
 
     splunk_search = SplunkSearch(**args)

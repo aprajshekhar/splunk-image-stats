@@ -3,6 +3,7 @@
 """A simple example showing to use the Service.job method to retrieve
 a search Job by its sid.
 """
+import httplib
 import sys
 import os
 from collections import namedtuple
@@ -26,12 +27,17 @@ class SplunkSearch(object):
         self.ImagePullStats = namedtuple('ImagePullStat', ['repository', 'end_date', 'registry', 'value', 'metric_type',
                                               'start_date'])
         self.service = client.connect(**kwargs)
+        self.environments = {'qa': 'registry.access.qa.redhat.com',
+                             'stage': 'registry.access.stage.redhat.com',
+                             'prod': 'registry.access.redhat.com'}
 
     def execute_splunk_search(self, **kwargs):
         earliest = '-'+str(kwargs['time_delta'])+kwargs['delta_type']
         print 'getting pull stat of %s' % kwargs['image_name']
-        job = self.service.jobs.create('search index=* host=crane0*.web.prod* \"/v2/'+kwargs['image_name'] +
-                                  '/manifests\" status = 302 |stats count',
+        host = 'crane0*.web.'+kwargs['env']+'*'
+        search_query = 'search index=* host='+host+' \"/v2/'+kwargs['image_name'] +'/manifests\" status = 302 |stats count'
+        print 'searching with %s' % search_query
+        job = self.service.jobs.create(search_query,
                                   exec_mode='blocking', earliest_time=earliest,
                                   latest=datetime.time.hour)
         blocking_results = job.results(count=0)
@@ -53,7 +59,7 @@ class SplunkSearch(object):
             return list(crane.get())
 
         images = SearchImages(kwargs['search_host'] + '/rs/search')
-        images.rows = 1000
+        images.rows = 2
         return list(images.search('documentKind:ImageRepository'))
 
 
@@ -86,12 +92,19 @@ class SplunkSearch(object):
         start_date_tz = self.__get_start_date(kwargs['delta_type'], kwargs['time_delta'])
         for image in image_list:
             kwargs['image_name'] = image
-            count = self.execute_splunk_search(**kwargs)
-            print 'pull stat of %(image)s is %(pull)s' % {'image': image,
-                                                          'pull': count}
+            try:
+                count = self.execute_splunk_search(**kwargs)
+                print 'pull stat of %(image)s is %(pull)s' % {'image': image,
+                                                              'pull': count}
+            except httplib.BadStatusLine:
+                sleep(5)
+                count = self.execute_splunk_search(**kwargs)
+                print 'pull stat of %(image)s is %(pull)s' % {'image': image,
+                                                              'pull': count}
+
             #stat_tuple = self.ImagePullStats(repository=image, end_date=end_date_tz, registry='registry.access.redhat.com',
                                         #value=count, metric_type='pull', start_date=start_date_tz)
-            stat_dict = {'repository': image, 'end_date': end_date_tz, 'registry': 'registry.access.redhat.com',
+            stat_dict = {'repository': image, 'end_date': end_date_tz, 'registry': self.environments.get(kwargs['env'],'prod'),
                          'value': count, 'metric_type': 'pull', 'start_date': start_date_tz}
             data.append(stat_dict)
             sleep(2)

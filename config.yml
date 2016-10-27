@@ -1,14 +1,29 @@
+# the splunk host
 host: 
+# user name for splunk. Make use of service account rather than personal account due to call per minute restrictions that may
+# be imposed on personal accounts
 username: 
+# password for the splunk user
 password: 
+# URL of the host that would provide repository list as a part of search result
 search_host: 
+# type of repository to be searched - ImageRepository or CertifiedSoftware
 search_type:
+# interval for which splunk has to be searched. Maximum is 8 hrs since this script makes use of blocking search
 time_delta: 2
+# interval type. Supports only hours (h) currently
 delta_type: h
+# LightBlue host
 save_url: 
+# absolute path to the lightlue cert including the cert name. Eg. /home/abc/lb-xyz.pem
 cert_path: 
+# pass phrase for lightblue cert
 passphrase: 
+# lightblue entity where data has to be saved
 save_entity_name: 
+# version of the entity e.g .0.0.3, .0.0.4-SNAPSHOT etc.
 save_entity_version: 
-crane_host: https://registry.access.qa.redhat.com
+# Crane host. If this is empty, search will be used to get repository list
+crane_host: https://registry.access.redhat.com
+# environment for which splun needs to query. Valid values are qa, stage and prod
 env: 

@@ -1,4 +1,4 @@
-host: splunk.corp.redhat.com
+host: 
 username: 
 password: 
 search_host: 
